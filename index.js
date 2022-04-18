@@ -28,7 +28,10 @@ function guessMime(base, defaultMime) {
 async function handleRequest(request) {
   const url = new URL(request.url)
 
-  const baseOriginURL = url.pathname.substr(1).split(/:\/\/?/, 2).join('://')
+  const baseOriginURL = url.pathname
+    .substr(1)
+    .split(/:\/\/?/, 2)
+    .join('://')
 
   const originURL = new URL([baseOriginURL, url.search, url.hash].join(''))
   console.log(originURL)
@@ -40,7 +43,8 @@ async function handleRequest(request) {
       'content-type',
       guessMime(baseOriginURL, headers.get('content-type')),
     )
-    return new Respond(originResponse.body, {
+    headers.delete('content-security-policy')
+    return new Response(originResponse.body, {
       status: originResponse.status,
       statusText: originResponse.statusText,
       headers: headers,
