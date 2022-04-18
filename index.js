@@ -17,6 +17,12 @@ function guessMime(base, defaultMime) {
   if (lowercaseBase.endsWith('.svg')) {
     return 'image/svg+xml'
   }
+  if (lowercaseBase.endsWith('.css')) {
+    return 'text/css'
+  }
+  if (lowercaseBase.endsWith('.js')) {
+    return 'text/javascript'
+  }
 
   return defaultMime
 }
