@@ -15,5 +15,8 @@
   "devDependencies": {
     "prettier": "^3.4.2",
     "wrangler": "^4.54.0"
+  },
+  "dependencies": {
+    "mime": "^4.1.0"
   }
 }
