@@ -18,7 +18,7 @@ async function handleRequest(request) {
   const originResponse = await fetch(originURL)
   if (originResponse.ok) {
     let headers = new Headers(originResponse.headers)
-    const detectedMime = mime.getType(baseOriginURL)
+    const detectedMime = mime.getType(originURL.pathname)
     headers.set('content-type', detectedMime || headers.get('content-type'))
     headers.delete('content-security-policy')
     return new Response(originResponse.body, {
