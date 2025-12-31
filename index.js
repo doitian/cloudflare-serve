@@ -1,7 +1,3 @@
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request))
-})
-
 function guessMime(base, defaultMime) {
   const lowercaseBase = base.toLowerCase()
 
@@ -28,14 +24,14 @@ function guessMime(base, defaultMime) {
 }
 
 /**
- * Respond with hello worker text
+ * Handle incoming request
  * @param {Request} request
  */
 async function handleRequest(request) {
   const url = new URL(request.url)
 
   const baseOriginURL = url.pathname
-    .substr(1)
+    .substring(1)
     .split(/:\/\/?/, 2)
     .join('://')
 
@@ -58,4 +54,10 @@ async function handleRequest(request) {
   }
 
   return originResponse
+}
+
+export default {
+  async fetch(request, env, ctx) {
+    return handleRequest(request)
+  },
 }
