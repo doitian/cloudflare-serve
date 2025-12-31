@@ -1,27 +1,4 @@
-function guessMime(base, defaultMime) {
-  const lowercaseBase = base.toLowerCase()
-
-  if (lowercaseBase.endsWith('.html')) {
-    return 'text/html'
-  }
-  if (lowercaseBase.endsWith('.jpg') || lowercaseBase.endsWith('.jpeg')) {
-    return 'image/jpeg'
-  }
-  if (lowercaseBase.endsWith('.png')) {
-    return 'image/png'
-  }
-  if (lowercaseBase.endsWith('.svg')) {
-    return 'image/svg+xml'
-  }
-  if (lowercaseBase.endsWith('.css')) {
-    return 'text/css'
-  }
-  if (lowercaseBase.endsWith('.js')) {
-    return 'text/javascript'
-  }
-
-  return defaultMime
-}
+import mime from 'mime/lite'
 
 /**
  * Handle incoming request
@@ -41,10 +18,8 @@ async function handleRequest(request) {
   const originResponse = await fetch(originURL)
   if (originResponse.ok) {
     let headers = new Headers(originResponse.headers)
-    headers.set(
-      'content-type',
-      guessMime(baseOriginURL, headers.get('content-type')),
-    )
+    const detectedMime = mime.getType(originURL.pathname)
+    headers.set('content-type', detectedMime || headers.get('content-type'))
     headers.delete('content-security-policy')
     return new Response(originResponse.body, {
       status: originResponse.status,
