@@ -7,12 +7,24 @@ import mime from 'mime/lite'
 async function handleRequest(request) {
   const url = new URL(request.url)
 
-  const baseOriginURL = url.pathname
-    .substring(1)
-    .split(/:\/\/?/, 2)
-    .join('://')
+  const pathname = url.pathname.substring(1)
+  const shouldDecode =
+    pathname.startsWith('https%3A//') || pathname.startsWith('http%3A//')
 
-  const originURL = new URL([baseOriginURL, url.search, url.hash].join(''))
+  let originURL
+  if (shouldDecode) {
+    // For decoded URLs, use search and hash from the decoded pathname
+    try {
+      originURL = new URL(decodeURIComponent(pathname))
+    } catch (error) {
+      // If decoding or URL parsing fails, return error response
+      return new Response('Invalid URL encoding', { status: 400 })
+    }
+  } else {
+    // For non-decoded URLs, parse as before and use worker request's search/hash
+    const baseOriginURL = pathname.split(/:\/\/?/, 2).join('://')
+    originURL = new URL([baseOriginURL, url.search, url.hash].join(''))
+  }
   console.log(originURL)
 
   const originResponse = await fetch(originURL)
