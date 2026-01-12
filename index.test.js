@@ -278,7 +278,7 @@ describe('Worker handleRequest', () => {
       )
     })
 
-    it('should handle http%3A/ encoded URLs', async () => {
+    it('should handle http%3A// encoded URLs', async () => {
       const request = new Request(
         'http://worker/http%3A//example.com/page.html',
       )
@@ -422,6 +422,18 @@ describe('Worker handleRequest', () => {
 
       expect(response.status).toBe(404)
       expect(response.statusText).toBe('Not Found')
+    })
+
+    it('should handle malformed URL-encoded URLs gracefully', async () => {
+      // Invalid percent encoding that will cause decodeURIComponent to throw
+      const request = new Request('http://worker/https%3A//example.com/%')
+
+      const response = await worker.fetch(request, env, {})
+
+      // Should return 400 Bad Request for malformed URLs
+      expect(response.status).toBe(400)
+      const body = await response.text()
+      expect(body).toBe('Invalid URL encoding')
     })
   })
 })

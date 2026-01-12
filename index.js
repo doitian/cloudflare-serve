@@ -14,7 +14,12 @@ async function handleRequest(request) {
   let originURL
   if (shouldDecode) {
     // For decoded URLs, use search and hash from the decoded pathname
-    originURL = new URL(decodeURIComponent(pathname))
+    try {
+      originURL = new URL(decodeURIComponent(pathname))
+    } catch (error) {
+      // If decoding or URL parsing fails, return error response
+      return new Response('Invalid URL encoding', { status: 400 })
+    }
   } else {
     // For non-decoded URLs, parse as before and use worker request's search/hash
     const baseOriginURL = pathname.split(/:\/\/?/, 2).join('://')
