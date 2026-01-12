@@ -253,7 +253,7 @@ describe('Worker handleRequest', () => {
       )
     })
 
-    it('should NOT decode URLs that do not start with http%3A/ or https%3A/', async () => {
+    it('should NOT decode URLs that do not start with http%3A// or https%3A//', async () => {
       const request = new Request(
         'http://worker/https://example.com/path%20with%20spaces/file.html',
       )
@@ -270,7 +270,7 @@ describe('Worker handleRequest', () => {
 
       await worker.fetch(request, env, {})
 
-      // The %20 should NOT be decoded since the URL doesn't start with http%3A/ or https%3A/
+      // The %20 should NOT be decoded since the URL doesn't start with http%3A// or https%3A//
       expect(mockFetch).toHaveBeenCalledWith(
         expect.objectContaining({
           href: 'https://example.com/path%20with%20spaces/file.html',
@@ -298,6 +298,106 @@ describe('Worker handleRequest', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         expect.objectContaining({
           href: 'http://example.com/page.html',
+        }),
+      )
+    })
+
+    it('should extract query parameters from encoded URL', async () => {
+      const request = new Request('http://worker/https%3A//example.com%3Fq=1')
+
+      const mockFetch = vi.fn(() =>
+        Promise.resolve(
+          new Response('content', {
+            status: 200,
+            headers: { 'content-type': 'text/plain' },
+          }),
+        ),
+      )
+      vi.stubGlobal('fetch', mockFetch)
+
+      await worker.fetch(request, env, {})
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: 'https://example.com/?q=1',
+          search: '?q=1',
+        }),
+      )
+    })
+
+    it('should extract hash from encoded URL', async () => {
+      const request = new Request(
+        'http://worker/https%3A//example.com/page.html%23section',
+      )
+
+      const mockFetch = vi.fn(() =>
+        Promise.resolve(
+          new Response('content', {
+            status: 200,
+            headers: { 'content-type': 'text/plain' },
+          }),
+        ),
+      )
+      vi.stubGlobal('fetch', mockFetch)
+
+      await worker.fetch(request, env, {})
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: 'https://example.com/page.html#section',
+          hash: '#section',
+        }),
+      )
+    })
+
+    it('should extract both query and hash from encoded URL', async () => {
+      const request = new Request(
+        'http://worker/https%3A//example.com/page.html%3Fkey=value%23section',
+      )
+
+      const mockFetch = vi.fn(() =>
+        Promise.resolve(
+          new Response('content', {
+            status: 200,
+            headers: { 'content-type': 'text/plain' },
+          }),
+        ),
+      )
+      vi.stubGlobal('fetch', mockFetch)
+
+      await worker.fetch(request, env, {})
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: 'https://example.com/page.html?key=value#section',
+          search: '?key=value',
+          hash: '#section',
+        }),
+      )
+    })
+
+    it('should use worker request query/hash for non-encoded URLs', async () => {
+      const request = new Request(
+        'http://worker/https://example.com/page.html?worker=param#worker-hash',
+      )
+
+      const mockFetch = vi.fn(() =>
+        Promise.resolve(
+          new Response('content', {
+            status: 200,
+            headers: { 'content-type': 'text/plain' },
+          }),
+        ),
+      )
+      vi.stubGlobal('fetch', mockFetch)
+
+      await worker.fetch(request, env, {})
+
+      // Non-encoded URLs should use query and hash from the worker request
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          search: '?worker=param',
+          hash: '#worker-hash',
         }),
       )
     })

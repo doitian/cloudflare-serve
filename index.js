@@ -9,12 +9,17 @@ async function handleRequest(request) {
 
   const pathname = url.pathname.substring(1)
   const shouldDecode =
-    pathname.startsWith('https%3A/') || pathname.startsWith('http%3A/')
-  const baseOriginURL = (shouldDecode ? decodeURIComponent(pathname) : pathname)
-    .split(/:\/\/?/, 2)
-    .join('://')
+    pathname.startsWith('https%3A//') || pathname.startsWith('http%3A//')
 
-  const originURL = new URL([baseOriginURL, url.search, url.hash].join(''))
+  let originURL
+  if (shouldDecode) {
+    // For decoded URLs, use search and hash from the decoded pathname
+    originURL = new URL(decodeURIComponent(pathname))
+  } else {
+    // For non-decoded URLs, parse as before and use worker request's search/hash
+    const baseOriginURL = pathname.split(/:\/\/?/, 2).join('://')
+    originURL = new URL([baseOriginURL, url.search, url.hash].join(''))
+  }
   console.log(originURL)
 
   const originResponse = await fetch(originURL)
