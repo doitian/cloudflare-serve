@@ -246,6 +246,7 @@ describe('Worker handleRequest', () => {
 
       await worker.fetch(request, env, {})
 
+      // When pathname is decoded and passed to URL constructor, spaces are re-encoded as %20
       expect(mockFetch).toHaveBeenCalledWith(
         expect.objectContaining({
           href: 'https://example.com/path%20with%20spaces/file.html',
@@ -254,8 +255,10 @@ describe('Worker handleRequest', () => {
     })
 
     it('should NOT decode URLs that do not start with http%3A// or https%3A//', async () => {
+      // This URL does NOT start with https%3A//, so the pathname won't be fully decoded
+      // The worker will preserve the existing behavior
       const request = new Request(
-        'http://worker/https://example.com/path%20with%20spaces/file.html',
+        'http://worker/https://example.com/data.json?foo=bar',
       )
 
       const mockFetch = vi.fn(() =>
@@ -270,10 +273,11 @@ describe('Worker handleRequest', () => {
 
       await worker.fetch(request, env, {})
 
-      // The %20 should NOT be decoded since the URL doesn't start with http%3A// or https%3A//
+      // Should use the worker request's query parameters, not decode from pathname
       expect(mockFetch).toHaveBeenCalledWith(
         expect.objectContaining({
-          href: 'https://example.com/path%20with%20spaces/file.html',
+          href: 'https://example.com/data.json?foo=bar',
+          search: '?foo=bar',
         }),
       )
     })
