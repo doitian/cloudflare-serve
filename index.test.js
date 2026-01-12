@@ -252,6 +252,55 @@ describe('Worker handleRequest', () => {
         }),
       )
     })
+
+    it('should NOT decode URLs that do not start with http%3A/ or https%3A/', async () => {
+      const request = new Request(
+        'http://worker/https://example.com/path%20with%20spaces/file.html',
+      )
+
+      const mockFetch = vi.fn(() =>
+        Promise.resolve(
+          new Response('content', {
+            status: 200,
+            headers: { 'content-type': 'text/plain' },
+          }),
+        ),
+      )
+      vi.stubGlobal('fetch', mockFetch)
+
+      await worker.fetch(request, env, {})
+
+      // The %20 should NOT be decoded since the URL doesn't start with http%3A/ or https%3A/
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: 'https://example.com/path%20with%20spaces/file.html',
+        }),
+      )
+    })
+
+    it('should handle http%3A/ encoded URLs', async () => {
+      const request = new Request(
+        'http://worker/http%3A//example.com/page.html',
+      )
+
+      const mockFetch = vi.fn(() =>
+        Promise.resolve(
+          new Response('content', {
+            status: 200,
+            headers: { 'content-type': 'text/plain' },
+          }),
+        ),
+      )
+      vi.stubGlobal('fetch', mockFetch)
+
+      await worker.fetch(request, env, {})
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: 'http://example.com/page.html',
+        }),
+      )
+    })
   })
 
   describe('Error handling', () => {
