@@ -7,8 +7,7 @@ import mime from 'mime/lite'
 async function handleRequest(request) {
   const url = new URL(request.url)
 
-  const baseOriginURL = url.pathname
-    .substring(1)
+  const baseOriginURL = decodeURIComponent(url.pathname.substring(1))
     .split(/:\/\/?/, 2)
     .join('://')
 

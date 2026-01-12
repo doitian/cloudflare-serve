@@ -204,6 +204,54 @@ describe('Worker handleRequest', () => {
         }),
       )
     })
+
+    it('should handle URL-encoded origin URLs', async () => {
+      const request = new Request(
+        'http://worker/https%3A//raw.githubusercontent.com/tlaplus/tlaplus/3e083e3d8b0dc0202307e1496f7889f0f3cb21d7/toolbox/org.lamport.tla.toolbox.doc/html/spec/pretty-printing.html',
+      )
+
+      const mockFetch = vi.fn(() =>
+        Promise.resolve(
+          new Response('<html></html>', {
+            status: 200,
+            headers: { 'content-type': 'text/plain' },
+          }),
+        ),
+      )
+      vi.stubGlobal('fetch', mockFetch)
+
+      await worker.fetch(request, env, {})
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: 'https://raw.githubusercontent.com/tlaplus/tlaplus/3e083e3d8b0dc0202307e1496f7889f0f3cb21d7/toolbox/org.lamport.tla.toolbox.doc/html/spec/pretty-printing.html',
+        }),
+      )
+    })
+
+    it('should handle URL-encoded URLs with special characters in path', async () => {
+      const request = new Request(
+        'http://worker/https%3A//example.com/path%20with%20spaces/file.html',
+      )
+
+      const mockFetch = vi.fn(() =>
+        Promise.resolve(
+          new Response('content', {
+            status: 200,
+            headers: { 'content-type': 'text/plain' },
+          }),
+        ),
+      )
+      vi.stubGlobal('fetch', mockFetch)
+
+      await worker.fetch(request, env, {})
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: 'https://example.com/path%20with%20spaces/file.html',
+        }),
+      )
+    })
   })
 
   describe('Error handling', () => {
